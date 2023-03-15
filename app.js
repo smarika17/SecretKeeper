@@ -62,15 +62,16 @@ passport.serializeUser(function(user, cb) {
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: "http://localhost:3000/auth/google/secrets",
+    callbackURL: "https://secretkeeper-gs4v.onrender.com/auth/google/callback",
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo" 
   },
   function(accessToken, refreshToken, profile, cb) {
-    User.findOne({ googleId: profile.id }).then((foundUser) => {
+    User.findOne({ username: profile.displayName, googleId: profile.id }).then((foundUser) => {
         if (foundUser) {
           return foundUser;
         } else {
           const newUser = new User({
+            username: profile.displayName, 
             googleId: profile.id
           });
           return newUser.save();
@@ -86,7 +87,7 @@ passport.use(new GoogleStrategy({
 
 app.get("/auth/google", passport.authenticate("google", { scope: ["profile"] }));
  
-app.get("/auth/google/secrets", 
+app.get("/auth/google/callback", 
   passport.authenticate("google", { failureRedirect: "/login" }),
   function(req, res) {
     res.redirect("/secrets");
